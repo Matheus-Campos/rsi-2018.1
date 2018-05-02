@@ -6,6 +6,10 @@
   "scripts": {
     "test": "node server.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Matheus-Campos/rsi-ftp"
+  },
   "keywords": [
     "ftp",
     "server",
@@ -13,5 +17,10 @@
     "node"
   ],
   "author": "Matheus Campos da Silva",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "@types/socket.io": "^1.4.33",
+    "net": "^1.0.2",
+    "socket.io": "^2.1.0"
+  }
 }
