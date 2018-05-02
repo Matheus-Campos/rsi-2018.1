@@ -1,0 +1,17 @@
+{
+  "name": "rsi-ftp",
+  "version": "1.0.0",
+  "description": "FTP client and server implementation on node",
+  "main": "server.js",
+  "scripts": {
+    "test": "node server.js"
+  },
+  "keywords": [
+    "ftp",
+    "server",
+    "client",
+    "node"
+  ],
+  "author": "Matheus Campos da Silva",
+  "license": "ISC"
+}
