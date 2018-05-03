@@ -37,19 +37,19 @@ class PTAServer extends Server {
 var respond: ((reply: string, args?: string) => void);
 
 const pta = new PTAServer((connection) => {
-    console.log('client connected [' + connection.remoteAddress + ']');
+    console.log('client connected [' + connection.remoteAddress + ':' + connection.remotePort + ']');
 
     connection.on('data', (data: Buffer) => {
-        var message = data.toString().replace('\r\n', '').split(' ');
+        var message = data.toString().split(' ');
         var seq_num = message[0];
         var command = message[1];
 
         // função para responder ao cliente
         respond = (reply: string, args?: string): void => {
             if (args) {
-                connection.write(seq_num + ' ' + reply + ' ' + args + '\n');
+                connection.write(seq_num + ' ' + reply + ' ' + args);
             } else {
-                connection.write(seq_num + ' ' + reply + '\n');
+                connection.write(seq_num + ' ' + reply);
             }
         }
 
@@ -60,7 +60,6 @@ const pta = new PTAServer((connection) => {
         }
 
         if (pta.isReady()) {
-            console.log('Está pronto');
             switch (command) {
                 case 'TERM':
                     if (message.length > 2) {
@@ -72,7 +71,7 @@ const pta = new PTAServer((connection) => {
                     }
                     break;
                 case 'PEGA':
-                    let args = message[2].replace('\n', '');
+                    let args = message[2];
                     let files = pta.getFiles();
                     var i: number = -1;
                     files.forEach((value, index) => {
@@ -102,7 +101,7 @@ const pta = new PTAServer((connection) => {
             switch (command) {
                 case 'CUMP':
                     if (message.length > 2) {
-                        let args = message[2].replace('\n', '');
+                        let args = message[2];
                         if (args === 'client') {
                             respond('OK');
                             pta.toggleState();
@@ -133,4 +132,4 @@ const pta = new PTAServer((connection) => {
 // começa a escutar as requisições
 pta.listen(port);
 console.log('processo ' + process.pid + ' rodando na plataforma ' + process.platform);
-console.log('Escutando na porta 11550...')
+console.log('Escutando na porta 11550...\n');
