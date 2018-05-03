@@ -41,6 +41,7 @@ const pta = new PTAServer((connection) => {
 
     connection.on('data', (data: Buffer) => {
         var message = data.toString().replace('\r\n', '').split(' ');
+        console.log(message);
         var seq_num = message[0];
         var command = message[1];
 
@@ -53,12 +54,23 @@ const pta = new PTAServer((connection) => {
             }
         }
 
+        if (!+seq_num || !command) {
+            connection.write('500\n');
+            connection.end();
+            return;
+        }
+
         if (pta.isReady()) {
+            console.log('Está pronto');
             switch (command) {
                 case 'TERM':
-                    respond('OK');
-                    connection.end();
-                    pta.toggleState();
+                    if (message.length > 2) {
+                        respond('NOK');
+                    } else {
+                        respond('OK');
+                        connection.end();
+                        pta.toggleState();
+                    }
                     break;
                 case 'PEGA':
                     let args = message[2].replace('\n', '');
@@ -76,15 +88,22 @@ const pta = new PTAServer((connection) => {
                     }
                     break;
                 case 'LIST':
-                    respond('ARQS', pta.getFiles().toString());
+                    if (message.length > 2) {
+                        respond('NOK');
+                    } else {
+                        let files = pta.getFiles();
+                        respond('ARQS', files.length + ' ' + files.toString());
+                    }
                     break;
                 default:
                     respond('NOK');
                     break;
             }
         } else {
+            console.log('Está em espera');
             switch (command) {
                 case 'CUMP':
+                    console.log('entrou no CUMP');
                     let args = message[2].replace('\n', '');
                     if (args === 'client') {
                         respond('OK');
@@ -106,7 +125,9 @@ const pta = new PTAServer((connection) => {
         if (had_error) {
             console.log('Error 500');
         }
-        pta.toggleState();
+        if (pta.isReady()) {
+            pta.toggleState();
+        }
         console.log('client disconnected [' + connection.remoteAddress + ']');
     });
 
