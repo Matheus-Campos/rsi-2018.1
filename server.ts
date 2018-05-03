@@ -41,7 +41,6 @@ const pta = new PTAServer((connection) => {
 
     connection.on('data', (data: Buffer) => {
         var message = data.toString().replace('\r\n', '').split(' ');
-        console.log(message);
         var seq_num = message[0];
         var command = message[1];
 
@@ -100,18 +99,16 @@ const pta = new PTAServer((connection) => {
                     break;
             }
         } else {
-            console.log('Está em espera');
             switch (command) {
                 case 'CUMP':
-                    console.log('entrou no CUMP');
-                    let args = message[2].replace('\n', '');
-                    if (args === 'client') {
-                        respond('OK');
-                        pta.toggleState();
-                    } else {
-                        respond('NOK');
-                    }
-                    break;
+                    if (message.length > 2) {
+                        let args = message[2].replace('\n', '');
+                        if (args === 'client') {
+                            respond('OK');
+                            pta.toggleState();
+                            break;
+                        }
+                    }                    
                 default:
                     respond('NOK');
                     connection.end();
