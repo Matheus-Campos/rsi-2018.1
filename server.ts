@@ -36,13 +36,19 @@ class PTAServer extends Server {
 // declara a função respond
 var respond: ((reply: string, args?: string) => void);
 
-const pta = new PTAServer((connection) => {
+const pta = new PTAServer((connection: Socket) => {
     console.log('client connected [' + connection.remoteAddress + ':' + connection.remotePort + ']');
 
     connection.on('data', (data: Buffer) => {
         var message = data.toString().split(' ');
         var seq_num = message[0];
         var command = message[1];
+
+        // if (seq_num != '0' || !command) {
+        //     connection.write('500\n');
+        //     connection.end();
+        //     return;
+        // }
 
         // função para responder ao cliente
         respond = (reply: string, args?: string): void => {
@@ -51,12 +57,6 @@ const pta = new PTAServer((connection) => {
             } else {
                 connection.write(seq_num + ' ' + reply);
             }
-        }
-
-        if (!+seq_num || !command) {
-            connection.write('500\n');
-            connection.end();
-            return;
         }
 
         if (pta.isReady()) {
@@ -117,14 +117,11 @@ const pta = new PTAServer((connection) => {
 
     });
 
-    connection.on('close', (had_error) => {
-        if (had_error) {
-            console.log('Error 500');
-        }
+    connection.on('close', () => {
         if (pta.isReady()) {
             pta.toggleState();
         }
-        console.log('client disconnected [' + connection.remoteAddress + ']');
+        console.log('client disconnected [' + connection.remoteAddress + ':' + connection.remotePort + ']');
     });
 
 });

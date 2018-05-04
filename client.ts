@@ -18,8 +18,7 @@ const connection = createConnection(port, host, () => {
         console.log(message);
     });
 
-    connection.on('close', (had_error) => {
-        if (had_error) console.log('Teve erro!');
+    connection.on('close', () => {
         connection.end();
         console.log('connection closed by host.');
         process.exit(200);
