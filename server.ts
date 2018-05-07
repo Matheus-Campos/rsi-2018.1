@@ -1,14 +1,24 @@
+// importa os métodos necessários
 import { createServer, Socket, Server } from 'net';
+import { statSync, openSync, readdirSync, stat, readSync, readFileSync } from 'fs';
+import { sep } from 'path';
 
+// define a porta
 const port: number = 11550;
 
 class PTAServer extends Server {
 
     // define a lista de arquivos e o estado do servidor
-    private files: Array<string> = ['file1.txt', 'file2.txt', 'file3.txt'];
+    // private files: Array<string> = ['file1.txt', 'file2.txt', 'file3.txt'];
+    private files: Array<string> = [];
     private ready: boolean = false;
+    private filesPath: Array<string> = ['.', 'pta-server', 'files'];
     
-    constructor(listener?: ((socket: Socket) => void)) { super(listener); }
+    constructor(listener?: ((socket: Socket) => void)) { 
+        super(listener);
+        let filesDir = this.filesPath.join(sep);
+        this.files = readdirSync(filesDir, {encoding: 'utf8'});
+     }
 
     /**
      * alterna o estado da FSM
@@ -24,6 +34,10 @@ class PTAServer extends Server {
     // getters
     getFiles(): Array<string> {
         return this.files;
+    }
+
+    getFilesPath(): Array<string> {
+        return this.filesPath;
     }
 
     isReady(): boolean {
@@ -85,7 +99,14 @@ const pta = new PTAServer((connection: Socket) => {
                     if (i === -1) {
                         respond('NOK');
                     } else {
-                        respond('ARQ', files[i]);
+                        let fp = pta.getFilesPath();
+                        fp.push(files[i]);
+                        let filePath = (fp.join(sep));
+                        stat(filePath, (err, stat) => {
+                            let file = openSync(filePath, 'r');
+                            let content = readFileSync(filePath, {encoding: 'utf8', flag: 'r'});
+                            respond('ARQ', stat.size + ' ' + content);
+                        });
                     }
                     break;
                 case 'LIST':
