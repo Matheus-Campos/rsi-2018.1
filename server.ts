@@ -1,6 +1,6 @@
 // importa os métodos necessários
-import { createServer, Socket, Server } from 'net';
-import { statSync, openSync, readdirSync, stat, readSync, readFileSync } from 'fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
+import { Server, Socket } from 'net';
 import { sep } from 'path';
 
 // define a porta
@@ -9,19 +9,19 @@ const port: number = 11550;
 class PTAServer extends Server {
 
     // define a lista de arquivos e o estado do servidor
-    // private files: Array<string> = ['file1.txt', 'file2.txt', 'file3.txt'];
     private files: Array<string> = [];
     private ready: boolean = false;
-    private filesPath: Array<string> = ['.', 'pta-server', 'files'];
+    private serverRoot: Array<string> = ['.', 'pta-server'];
+    private users: Array<string> = [];
     
     constructor(listener?: ((socket: Socket) => void)) { 
         super(listener);
-        let filesDir = this.filesPath.join(sep);
-        this.files = readdirSync(filesDir, {encoding: 'utf8'});
+        this.updateFiles();
+        this.updateUsers();
      }
 
     /**
-     * alterna o estado da FSM
+     * Alterna o estado da FSM
      */
     toggleState(): void {
         if (this.ready) {
@@ -31,17 +31,58 @@ class PTAServer extends Server {
         }
     }
 
-    // getters
+    // Getters
     getFiles(): Array<string> {
+        this.updateFiles();
         return this.files;
-    }
-
-    getFilesPath(): Array<string> {
-        return this.filesPath;
     }
 
     isReady(): boolean {
         return this.ready;
+    }
+
+    private getFilesPath(): string {
+        let filesPath = this.serverRoot.slice();
+        filesPath.push('files');
+        return filesPath.join(sep); // ./pta-server/files
+    }
+
+    /**
+     * Update the users variable
+     */
+    updateUsers(): void {
+        let usersFilePathArray = this.serverRoot.slice();
+        usersFilePathArray.push('users.txt');
+        let usersFile = usersFilePathArray.join(sep); // ./pta-server/users.txt
+        this.users = readFileSync(usersFile, {encoding: 'utf8'}).split('\n');
+    }
+
+    /**
+     * Update the files variable
+     */
+    updateFiles(): void {
+        let filesPath = this.getFilesPath();
+        this.files = readdirSync(filesPath, {encoding: 'utf8'});
+    }
+
+    /**
+     * Verify if the user have permission to access the files
+     */
+    verifyUser(user: string): boolean {
+        this.updateUsers();
+        return this.users.some((value) => {
+            return value === user;
+        });
+    }
+
+    getFile(filename: string) {
+        let file = this.getFilesPath() + sep + filename;
+        if (existsSync(file)) {
+            let bytes = statSync(file).size;
+            let content = readFileSync(file, {encoding: 'utf8', flag: 'r'});
+            return bytes + ' ' + content;
+        }
+        return undefined;
     }
 
     /**
@@ -88,25 +129,16 @@ const pta = new PTAServer((connection: Socket) => {
                     }
                     break;
                 case 'PEGA':
-                    let args = message[2];
-                    let files = pta.getFiles();
-                    var i: number = -1;
-                    files.forEach((value, index) => {
-                        if (args === value) {
-                            i = index;
+                    if (message.length > 2) {
+                        let args = message[2];
+                        let response = pta.getFile(args);
+                        if (response) {
+                            respond('ARQ', response);
+                        } else {
+                            respond('NOK');
                         }
-                    });
-                    if (i === -1) {
-                        respond('NOK');
                     } else {
-                        let fp = pta.getFilesPath();
-                        fp.push(files[i]);
-                        let filePath = (fp.join(sep));
-                        stat(filePath, (err, stat) => {
-                            let file = openSync(filePath, 'r');
-                            let content = readFileSync(filePath, {encoding: 'utf8', flag: 'r'});
-                            respond('ARQ', stat.size + ' ' + content);
-                        });
+                        respond('NOK');
                     }
                     break;
                 case 'LIST':
@@ -126,12 +158,13 @@ const pta = new PTAServer((connection: Socket) => {
                 case 'CUMP':
                     if (message.length > 2) {
                         let args = message[2];
-                        if (args === 'client') {
+                        let allowed = pta.verifyUser(args);
+                        if (allowed) {
                             respond('OK');
                             pta.toggleState();
                             break;
                         }
-                    }                    
+                    }       
                 default:
                     respond('NOK');
                     connection.end();
