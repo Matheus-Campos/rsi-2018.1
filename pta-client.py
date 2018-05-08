@@ -114,7 +114,6 @@ def test4(sckt,arq,bad):
   commandUnknow = True
   byteCnt = 0
   data2 = None
-  # bytesTotal = 0
   while 1:
     data, addr = sckt.recvfrom(2048)
     if commandUnknow:
@@ -159,15 +158,12 @@ def test4(sckt,arq,bad):
     return -2
 
 if __name__ == "__main__":
-  # if len(sys.argv) <= 3:
-  #   print("Usage: pta-client.py <server-ip> <server-port> <user>")
-  #   sys.exit(2)
-  # serverIp = sys.argv[1]
-  # serverPort = int(sys.argv[2])
-  # user = sys.argv[3]
-  serverIp = '127.0.0.1'
-  serverPort = int('11550')
-  user = 'user1'
+  if len(sys.argv) <= 3:
+    print("Usage: pta-client.py <server-ip> <server-port> <user>")
+    sys.exit(2)
+  serverIp = sys.argv[1]
+  serverPort = int(sys.argv[2])
+  user = sys.argv[3]
 
   points = 0
 
@@ -196,8 +192,7 @@ if __name__ == "__main__":
   (pts,arqs) = test3(cSocket)
   points += pts
   print("Points: %d/6" % points)
-  # arq = random.choice(arqs)
-  arq = 'dummyfile03-with-a-bigger-name-to-test-your-buffer-treatment.png'
+  arq = random.choice(arqs)
 
   #Testing ARQ
   print("Testing ARQ with good file")
