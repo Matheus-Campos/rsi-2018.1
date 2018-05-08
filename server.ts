@@ -2,6 +2,7 @@
 import { existsSync, readFileSync, readdirSync } from 'fs';
 import { Server, Socket } from 'net';
 import { sep } from 'path';
+import * as os from 'os';
 
 // define a porta
 const port: number = 11550;
@@ -54,7 +55,7 @@ class PTAServer extends Server {
         let usersFilePathArray = this.serverRoot.slice();
         usersFilePathArray.push('users.txt');
         let usersFile = usersFilePathArray.join(sep); // ./pta-server/users.txt
-        this.users = readFileSync(usersFile, {encoding: 'utf8'}).split('\n');
+        this.users = readFileSync(usersFile, {encoding: 'utf8'}).split(os.EOL);
     }
 
     /**
