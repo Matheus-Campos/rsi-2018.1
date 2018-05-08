@@ -1,5 +1,5 @@
 // importa os métodos necessários
-import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
+import { existsSync, readFileSync, readdirSync } from 'fs';
 import { Server, Socket } from 'net';
 import { sep } from 'path';
 
@@ -78,9 +78,8 @@ class PTAServer extends Server {
     getFile(filename: string) {
         let file = this.getFilesPath() + sep + filename;
         if (existsSync(file)) {
-            let bytes = statSync(file).size;
-            let content = readFileSync(file, {encoding: 'utf8', flag: 'r'});
-            return bytes + ' ' + content;
+            let content = readFileSync(file);
+            return content.byteLength + ' ' + content;
         }
         return undefined;
     }
