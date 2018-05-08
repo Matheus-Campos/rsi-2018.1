@@ -80,7 +80,7 @@ class PTAServer extends Server {
         let file = this.getFilesPath() + sep + filename;
         if (existsSync(file)) {
             let content = readFileSync(file);
-            return content.byteLength + ' ' + content;
+            return content.byteLength + ' ' + content.toString('ascii');
         }
         return undefined;
     }
@@ -109,11 +109,11 @@ const pta = new PTAServer((connection: Socket) => {
         var command = message[1];
 
         // implementa respond como função para responder ao cliente
-        respond = (reply: string, args?: string, cb?: () => void): void => {
+        respond = (reply: string, args?: string): void => {
             if (args) {
-                connection.write(seq_num + ' ' + reply + ' ' + args, cb);
+                connection.write(seq_num + ' ' + reply + ' ' + args);
             } else {
-                connection.write(seq_num + ' ' + reply, cb);
+                connection.write(seq_num + ' ' + reply);
             }
         };
 
@@ -123,10 +123,9 @@ const pta = new PTAServer((connection: Socket) => {
                     if (message.length > 2) {
                         respond('NOK');
                     } else {
-                        respond('OK', null, () => {
-                            connection.end();
-                            pta.toggleState();
-                        });
+                        respond('OK');
+                        connection.end();
+                        pta.toggleState();
                     }
                     break;
                 case 'PEGA':
@@ -161,16 +160,14 @@ const pta = new PTAServer((connection: Socket) => {
                         let args = message[2];
                         let allowed = pta.verifyUser(args);
                         if (allowed) {
-                            respond('OK', null, () => {
-                                pta.toggleState();
-                            });
+                            respond('OK');
+                            pta.toggleState();
                             break;
                         }
                     }       
                 default:
-                    respond('NOK', null, () => {
-                        connection.end();
-                    });
+                    respond('NOK');
+                    connection.end();
                     break;
             }
         }
