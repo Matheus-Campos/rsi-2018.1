@@ -109,15 +109,13 @@ const pta = new PTAServer((connection: Socket) => {
         var command = message[1];
 
         // implementa respond como função para responder ao cliente
-        respond = (reply: string, args?: string, cb?: () => void): Promise<void> => {
-            return new Promise((resolve) => {
-                if (args) {
-                    connection.write(seq_num + ' ' + reply + ' ' + args, cb);
-                } else {
-                    connection.write(seq_num + ' ' + reply, cb);
-                }
-            });
-        }
+        respond = (reply: string, args?: string, cb?: () => void): void => {
+            if (args) {
+                connection.write(seq_num + ' ' + reply + ' ' + args, cb);
+            } else {
+                connection.write(seq_num + ' ' + reply, cb);
+            }
+        };
 
         if (pta.isReady()) {
             switch (command) {
