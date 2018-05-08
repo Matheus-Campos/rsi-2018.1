@@ -97,8 +97,8 @@ class PTAServer extends Server {
 
 }
 
-// declara a função respond
-var respond: ((reply: string, args?: string) => void);
+// declara a variável respond
+var respond: any;
 
 const pta = new PTAServer((connection: Socket) => {
     console.log(pta.now() + ' - Client connected [' + connection.remoteAddress + ':' + connection.remotePort + ']');
@@ -108,13 +108,15 @@ const pta = new PTAServer((connection: Socket) => {
         var seq_num = message[0];
         var command = message[1];
 
-        // função para responder ao cliente
-        respond = (reply: string, args?: string): void => {
-            if (args) {
-                connection.write(seq_num + ' ' + reply + ' ' + args);
-            } else {
-                connection.write(seq_num + ' ' + reply);
-            }
+        // implementa respond como função para responder ao cliente
+        respond = (reply: string, args?: string, cb?: () => void): Promise<void> => {
+            return new Promise((resolve) => {
+                if (args) {
+                    connection.write(seq_num + ' ' + reply + ' ' + args, cb);
+                } else {
+                    connection.write(seq_num + ' ' + reply, cb);
+                }
+            });
         }
 
         if (pta.isReady()) {
@@ -123,9 +125,10 @@ const pta = new PTAServer((connection: Socket) => {
                     if (message.length > 2) {
                         respond('NOK');
                     } else {
-                        respond('OK');
-                        connection.end();
-                        pta.toggleState();
+                        respond('OK', null, () => {
+                            connection.end();
+                            pta.toggleState();
+                        });
                     }
                     break;
                 case 'PEGA':
@@ -160,25 +163,43 @@ const pta = new PTAServer((connection: Socket) => {
                         let args = message[2];
                         let allowed = pta.verifyUser(args);
                         if (allowed) {
-                            respond('OK');
-                            pta.toggleState();
+                            respond('OK', null, () => {
+                                pta.toggleState();
+                            });
                             break;
                         }
                     }       
                 default:
-                    respond('NOK');
-                    connection.end();
+                    respond('NOK', null, () => {
+                        connection.end();
+                    });
                     break;
             }
         }
 
     });
 
-    connection.on('close', () => {
+    connection.on('timeout', () => {
+        connection.write('Closing connection...', () => {
+            connection.end();
+        });
+    });
+    
+    connection.on('error', (err) => {
+        console.log(pta.now() + ' - Client disconnected by ' + err.message + ' error [' + connection.remoteAddress + ':' + connection.remotePort + ']');
+    });
+    
+    connection.on('close', (had_error) => {
+        if (!had_error) {
+            console.log(pta.now() + ' - Client disconnected [' + connection.remoteAddress + ':' + connection.remotePort + ']');
+        }
         if (pta.isReady()) {
             pta.toggleState();
         }
-        console.log(pta.now() + ' - Client disconnected [' + connection.remoteAddress + ':' + connection.remotePort + ']');
+    });
+
+    connection.on('end', () => {
+        connection.end();
     });
 
 });
