@@ -76,11 +76,11 @@ class PTAServer extends Server {
         });
     }
 
-    getFile(filename: string) {
+    getFile(filename: string): Buffer | undefined {
         let file = this.getFilesPath() + sep + filename;
         if (existsSync(file)) {
             let content = readFileSync(file);
-            return content.byteLength + ' ' + content.toString('ascii');
+            return content;
         }
         return undefined;
     }
@@ -109,11 +109,11 @@ const pta = new PTAServer((connection: Socket) => {
         var command = message[1];
 
         // implementa respond como função para responder ao cliente
-        respond = (reply: string, args?: string): void => {
+        respond = (reply: string, args?: Buffer): void => {
             if (args) {
-                connection.write(seq_num + ' ' + reply + ' ' + args);
+                connection.write(Buffer.from(seq_num + ' ' + reply + ' ' + args));
             } else {
-                connection.write(seq_num + ' ' + reply);
+                connection.write(Buffer.from(seq_num + ' ' + reply));
             }
         };
 
@@ -133,7 +133,10 @@ const pta = new PTAServer((connection: Socket) => {
                         let args = message[2];
                         let response = pta.getFile(args);
                         if (response) {
-                            respond('ARQ', response);
+                            // responde com a quantidade de bytes do arquivo
+                            // depois envia os bytes do arquivo depois
+                            connection.write(Buffer.from(seq_num + ' ARQ ' + response.byteLength + ' '));
+                            connection.write(response);
                         } else {
                             respond('NOK');
                         }
