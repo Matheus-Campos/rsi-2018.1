@@ -6,6 +6,8 @@ const port: number = 5000;
 
 // cria o handler para o recebimento de dados por parte do cliente
 const handler = (connection: Socket) => {
+    console.log(connection.remoteAddress + ':' + connection.remotePort +' connected on ' + connection.localAddress);
+
     connection.on('data', (data: Buffer) => {
         connection.write(data.toString().toUpperCase());
     });
