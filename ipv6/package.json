@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@types/node": "^10.5.3",
+    "net": "^1.0.2"
+  }
+}

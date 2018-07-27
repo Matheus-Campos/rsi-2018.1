@@ -12,7 +12,7 @@ class PTAServer extends Server {
     // define a lista de arquivos e o estado do servidor
     private files: Array<string> = [];
     private ready: boolean = false;
-    private serverRoot: Array<string> = ['.', 'pta-server'];
+    private serverRoot: Array<string> = ['.', 'ftp-server'];
     private users: Array<string> = [];
     
     constructor(listener?: ((socket: Socket) => void)) { 
